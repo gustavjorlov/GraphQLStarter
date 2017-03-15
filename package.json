@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel src --out-dir dist"
+    "build": "babel src --out-dir dist",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "Gustav <gustav.jorlov@gmail.com>",
