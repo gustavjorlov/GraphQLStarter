@@ -1,33 +1,19 @@
+import express from 'express';
 import {graphql} from 'graphql';
 import schema from './schema';
+import bodyParser from 'body-parser';
 
+const app = express();
+app.use(bodyParser.json());
 
-const query = `{
-  kitscon(id: "17.1"){
-    id,
-    date,
-    attendees {
-      id,
-      name,
-      talk {
-        title
-      }
-    },
-    talks {
-      id,
-      title,
-      talker {
-        id,
-        name
-      }
-    }
-  }
-}`;
-
-const run = query => {
-  graphql(schema, query).then(result => {
-    console.log(JSON.stringify(result, null, 2));
+app.post('/graphql', (req, res) => {
+  run(req.body.query).then(response => {
+    res.send(response);
   });
-};
+});
 
-run(query);
+app.listen(3000, () => {
+  console.log('Listening');
+});
+
+export const run = query => graphql(schema, query);
