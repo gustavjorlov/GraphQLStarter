@@ -6,10 +6,9 @@ import bodyParser from 'body-parser';
 const app = express();
 app.use(bodyParser.json());
 
-app.post('/graphql', (req, res) => {
-  run(req.body.query).then(response => {
-    res.send(response);
-  });
+app.post('/graphql', async (req, res) => {
+  const response = await run(req.body.query);
+  res.send(response);
 });
 
 app.listen(3000, () => {

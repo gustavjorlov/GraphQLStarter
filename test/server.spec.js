@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {run} from '../src/server';
+import {run} from '../dist/server';
 
 describe('GraphQL server', () => {
   it('should run graphql', () => {
