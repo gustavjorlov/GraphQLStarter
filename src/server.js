@@ -7,7 +7,9 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post('/graphql', async (req, res) => {
-  const response = await run(req.body.query);
+  const {query, operationName, variables} = req.body;
+  console.log({variables});
+  const response = await run(query, variables, operationName);
   res.send(response);
 });
 
@@ -15,4 +17,4 @@ app.listen(3000, () => {
   console.log('Listening');
 });
 
-export const run = query => graphql(schema, query);
+export const run = (query, variables, operationName) => graphql(schema, query, variables, operationName);

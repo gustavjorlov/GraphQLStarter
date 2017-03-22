@@ -35,5 +35,10 @@ export const database = {
       return talk[0];
     }
 
+  },
+  addAttendee: name => {
+    const _newPerson = {id: Date.now(), name};
+    Persons.push(_newPerson);
+    return _newPerson;
   }
 };

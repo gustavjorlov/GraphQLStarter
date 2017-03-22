@@ -1,4 +1,4 @@
-import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString} from 'graphql';
+import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull} from 'graphql';
 import {database} from './database';
 
 const Person = new GraphQLObjectType({
@@ -34,9 +34,10 @@ const KitsCon = new GraphQLObjectType({
   name: 'KitsCon',
   description: 'Conference API, the right way',
   fields: {
-    id: { type: GraphQLString },
-    date: { type: GraphQLString },
+    id: { type: GraphQLString, description: 'Semver FTW' },
+    date: { type: GraphQLString, description: 'Date of the dates' },
     talks: {
+      description: 'List of all talks on the conference',
       type: new GraphQLList(Talk),
       resolve: () => {
         return database.getTalks();
@@ -67,8 +68,24 @@ const Query = new GraphQLObjectType({
   }
 });
 
+const Mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  description: 'Add stuff to the conference',
+  fields: {
+    addAttendee: {
+      type: Person,
+      description: 'Create Person to add to the conference',
+      args: {
+        name: {type: new GraphQLNonNull(GraphQLString)}
+      },
+      resolve: (source, args) => database.addAttendee(args.name)
+    }
+  }
+});
+
 const schema = new GraphQLSchema({
-  query: Query
+  query: Query,
+  mutation: Mutation
 });
 
 export default schema;
