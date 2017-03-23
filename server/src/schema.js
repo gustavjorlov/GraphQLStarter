@@ -56,14 +56,22 @@ const Query = new GraphQLObjectType({
   name: 'Query',
   description: 'Root query',
   fields: {
+    attendees: {
+      type: new GraphQLList(Person),
+      resolve: (source, args) => {
+        return database.getPersons();
+      }
+    },
     kitscon: {
       type: KitsCon,
       args: {
         id: {type: GraphQLString}
       },
-      resolve: (source, args) => {
-        return database.getConferenceById(args.id);
-      }
+      resolve: (source, args) => database.getConferenceById(args.id)
+    },
+    talks: {
+      type: new GraphQLList(Talk),
+      resolve: () => database.getTalks()
     }
   }
 });

@@ -4,16 +4,22 @@ import schema from './schema';
 import bodyParser from 'body-parser';
 
 const app = express();
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 app.use(bodyParser.json());
 
 app.post('/graphql', async (req, res) => {
   const {query, operationName, variables} = req.body;
-  console.log({variables});
+  console.log({query});
   const response = await run(query, variables, operationName);
   res.send(response);
 });
 
-app.listen(3000, () => {
+app.listen(4000, () => {
   console.log('Listening');
 });
 
