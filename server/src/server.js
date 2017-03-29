@@ -12,6 +12,8 @@ app.use(function(req, res, next) {
 });
 app.use(bodyParser.json());
 
+app.use(express.static('../frontend/build'));
+
 app.post('/graphql', async (req, res) => {
   const {query, operationName, variables} = req.body;
   console.log({query});

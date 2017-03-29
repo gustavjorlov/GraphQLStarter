@@ -3,3 +3,18 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+.content{
+  background: #889999;
+}
+.sidebar{
+  background: #999988;
+  width: 30%;
+  float: left;
+}
+.main{
+  background: #998899;
+  width: 69%;
+  float: left;
+  min-height: 500px;
+}

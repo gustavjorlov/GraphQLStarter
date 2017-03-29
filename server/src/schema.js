@@ -26,7 +26,8 @@ const Talk = new GraphQLObjectType({
         return database.getPersonByTalkId(source.id);
       }
     },
-    title: {type: GraphQLString}
+    title: {type: GraphQLString},
+    transcript: {type: GraphQLString}
   }
 });
 
