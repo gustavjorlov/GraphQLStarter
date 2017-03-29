@@ -10,33 +10,55 @@ describe('GraphQL server', () => {
         attendees {
           id,
           name,
+          age,
           talk {
-            title
+            title,
+            attendees {
+              name, age
+            }
           }
         },
         talks {
           id,
           title,
+          transcript,
           talker {
             id,
+            name
+          },
+          attendees {
             name
           }
         }
       }
     }`).then(response => {
+      console.log(JSON.stringify(response, null, 2));
       expect(response.data.kitscon.id).to.equal('17.1');
-      // console.log(JSON.stringify(response, null, 2));
     });
   });
 
   it('should ask for attendees', () => {
     return run(`{
-      kitscon(id: "17.1"){
-        attendees {name}
+      attendees {
+        name,
+        talk {
+          title
+        }
       }
     }`).then(response => {
-      expect(response.data.kitscon.attendees).to.be.instanceof(Array);
-      // console.log(JSON.stringify(response, null, 2));
+      expect(response.data.attendees).to.be.instanceof(Array);
+    });
+  });
+
+  it('should ask for talks', () => {
+    return run(`{
+      talks {title, transcript,
+        talker {
+          name
+        }
+      }
+    }`).then(response => {
+      expect(response.data.talks).to.be.instanceof(Array);
     });
   });
 });

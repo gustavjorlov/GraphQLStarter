@@ -1,5 +1,11 @@
-import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull} from 'graphql';
+import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt} from 'graphql';
 import {database} from './database';
+var DataLoader = require('dataloader');
+
+const personLoader = new DataLoader(keys => database.getPersonsByIds(keys));
+const loadPersonByTalk = new DataLoader(talkIds => new Promise((resolve, reject) => {
+    resolve(database.getPersonsByTalkIds(talkIds));
+}));
 
 const Person = new GraphQLObjectType({
   name: 'Person',
@@ -7,11 +13,10 @@ const Person = new GraphQLObjectType({
   fields: () => ({
     id: { type: GraphQLString },
     name: { type: GraphQLString },
+    age: { type: GraphQLInt },
     talk: {
       type: Talk,
-      resolve: (source, args) => {
-        return database.getTalkByPersonId(source.id);
-      }
+      resolve: (source, args) => database.getTalkByPersonId(source.id)
     }
   })
 });
@@ -22,12 +27,14 @@ const Talk = new GraphQLObjectType({
     id: { type: GraphQLString },
     talker: {
       type: Person,
-      resolve: (source, args) => {
-        return database.getPersonByTalkId(source.id);
-      }
+      resolve: (talk, args) => loadPersonByTalk.load(talk.id)
     },
     title: {type: GraphQLString},
-    transcript: {type: GraphQLString}
+    transcript: {type: GraphQLString},
+    attendees: {
+      type: new GraphQLList(Person),
+      resolve: talk => talk.attendees.map(attendee => personLoader.load(attendee))
+    }
   }
 });
 
@@ -40,15 +47,11 @@ const KitsCon = new GraphQLObjectType({
     talks: {
       description: 'List of all talks on the conference',
       type: new GraphQLList(Talk),
-      resolve: () => {
-        return database.getTalks();
-      }
+      resolve: () => database.getTalks()
     },
     attendees: {
       type: new GraphQLList(Person),
-      resolve: (source, args) => {
-        return database.getPersons();
-      }
+      resolve: (source, args) => database.getPersons()
     }
   }
 });
