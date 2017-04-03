@@ -15,7 +15,7 @@ const Talks = [
     id: 'three',
     title: 'Krocka - en säkerhet!',
     transcript: `Bang bang, you shot me down...`,
-    attendees: ['6', '1', '5', '4']
+    attendees: ['6', '1', '5', '4', '10']
   }
 ];
 
