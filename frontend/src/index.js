@@ -5,7 +5,7 @@ import './index.css';
 import {HashRouter} from 'react-router-dom';
 import { ApolloClient, ApolloProvider, createNetworkInterface } from 'react-apollo';
 const client = new ApolloClient({
-  networkInterface: createNetworkInterface({ uri: 'http://localhost:4000/graphql' }),
+  networkInterface: createNetworkInterface({ uri: 'http://localhost:3001/graphql' }),
 });
 
 ReactDOM.render(
