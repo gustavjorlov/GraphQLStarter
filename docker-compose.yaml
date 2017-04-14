@@ -1,13 +1,15 @@
 version: "3"
 
 services:
-  front:
+  front-service:
     build: ./frontend
     image: gql-frontend:gql-frontend_v1
     ports:
       - 1234:3000
-  back:
+    depends_on:
+      - back-service
+  back-service:
     build: ./server
     image: gql-server:gql-server_v1
     ports:
-      - 3001:4000
+      - 5000:4000
