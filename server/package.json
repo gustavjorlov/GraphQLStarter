@@ -24,6 +24,7 @@
     "express": "^4.15.2",
     "graphql": "^0.9.1",
     "mocha": "^3.2.0",
-    "react-router-dom": "^4.0.0"
+    "react-router-dom": "^4.0.0",
+    "sequelize": "^3.30.4"
   }
 }

@@ -1,3 +1,26 @@
+import {connectDB} from './mysql-connector';
+
+const dbConnection = connectDB({
+  database: 'users',
+  userName: 'admin',
+  password: 'hejhoj',
+  host: 'http://mysql-service',
+  dialect: 'mysql',
+  logging: console.log // false
+});
+
+dbConnection.then(db => {
+  console.log("hello database");
+  // try {
+  //   runGraphQL(event, callback, db);
+  // } catch (error) {
+  //   // console.error('Error in handler: ', error);
+  //   callback(error, null);
+  // }
+}).catch(e => {
+  console.log("nope", e);
+});
+
 const Talks = [
   {
     id: 'one',

@@ -21,6 +21,8 @@ app.post('/graphql', async (req, res) => {
   res.send(response);
 });
 
+
+// TODO: setup listening to database here...
 app.listen(4000, () => {
   console.log('Listening');
 });

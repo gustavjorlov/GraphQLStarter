@@ -13,3 +13,15 @@ services:
     image: gql-server:gql-server_v1
     ports:
       - 5000:4000
+    depends_on:
+      - mysql-service
+  mysql-service:
+    image: mysql:5
+    # mysql image will already expose port 3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=superduper
+      - MYSQL_DATABASE=users
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=hejhoj
+    volumes:
+      - ./data:/var/lib/mysql
