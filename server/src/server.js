@@ -1,7 +1,8 @@
 import express from 'express';
 import {graphql} from 'graphql';
-import schema from './schema';
+import {createSchema} from './schema2';
 import bodyParser from 'body-parser';
+import {connectDB} from './database/mysql_connector';
 
 const app = express();
 
@@ -11,20 +12,27 @@ app.use(function(req, res, next) {
   next();
 });
 app.use(bodyParser.json());
-
 app.use(express.static('../frontend/build'));
 
-app.post('/graphql', async (req, res) => {
-  const {query, operationName, variables} = req.body;
-  console.log({query});
-  const response = await run(query, variables, operationName);
-  res.send(response);
+connectDB({
+  database: 'users', userName: 'admin', password: 'hejhoj',
+  host: 'mysql-service', dialect: 'mysql', logging: console.log // false
+}).then(db => {
+  console.log("Woop, db done", Object.keys(db));
+  const schema = createSchema(db);
+  const run = (query, variables, operationName) => graphql(schema, query, variables, operationName);
+
+  app.post('/graphql', async (req, res) => {
+    const {query, operationName, variables} = req.body;
+    const response = await run(query, variables, operationName);
+    res.send(response);
+  });
+
+  app.listen(4000, () => {
+    console.log('Listening');
+  });
+
+}).catch(err => {
+  console.log("Nope", err);
+  throw err;
 });
-
-
-// TODO: setup listening to database here...
-app.listen(4000, () => {
-  console.log('Listening');
-});
-
-export const run = (query, variables, operationName) => graphql(schema, query, variables, operationName);

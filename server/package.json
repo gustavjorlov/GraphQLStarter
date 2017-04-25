@@ -12,6 +12,7 @@
   "author": "Gustav <gustav.jorlov@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "babel-cli": "^6.24.1",
     "babel-core": "^6.24.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-polyfill": "^6.23.0",
@@ -24,6 +25,7 @@
     "express": "^4.15.2",
     "graphql": "^0.9.1",
     "mocha": "^3.2.0",
+    "mysql": "^2.13.0",
     "react-router-dom": "^4.0.0",
     "sequelize": "^3.30.4"
   }

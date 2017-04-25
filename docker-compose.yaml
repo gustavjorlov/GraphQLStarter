@@ -8,16 +8,11 @@ services:
       - 1234:3000
     depends_on:
       - back-service
-  back-service:
-    build: ./server
-    image: gql-server:gql-server_v1
-    ports:
-      - 5000:4000
-    depends_on:
-      - mysql-service
   mysql-service:
     image: mysql:5
     # mysql image will already expose port 3306
+    ports:
+      - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=superduper
       - MYSQL_DATABASE=users
@@ -25,3 +20,12 @@ services:
       - MYSQL_PASSWORD=hejhoj
     volumes:
       - ./data:/var/lib/mysql
+  back-service:
+    build: ./server
+    image: gql-server:gql-server_v1
+    ports:
+      - 5000:4000
+    depends_on:
+      - mysql-service
+    volumes:
+      - ./server:/usr/src/app

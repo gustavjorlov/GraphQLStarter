@@ -1,5 +1,5 @@
 import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt} from 'graphql';
-import {database} from './database';
+import {database} from './database/database';
 var DataLoader = require('dataloader');
 
 const personLoader = new DataLoader(keys => database.getPersonsByIds(keys));
