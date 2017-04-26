@@ -3,6 +3,7 @@ import {graphql} from 'graphql';
 import {createSchema} from './schema2';
 import bodyParser from 'body-parser';
 import {connectDB} from './database/mysql_connector';
+// import {WorkService} from './database/work_service';
 
 const app = express();
 
@@ -19,6 +20,7 @@ connectDB({
   host: 'mysql-service', dialect: 'mysql', logging: console.log // false
 }).then(db => {
   console.log("Woop, db done", Object.keys(db));
+  // const _workService = WorkService(db);
   const schema = createSchema(db);
   const run = (query, variables, operationName) => graphql(schema, query, variables, operationName);
 

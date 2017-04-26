@@ -8,15 +8,20 @@ export const createSchema = db => {
     fields: () => ({
       id: { type: GraphQLString },
       name: { type: GraphQLString },
-      colleagues: { type: new GraphQLList(Employee) },
+      colleagues: {
+        type: new GraphQLList(Employee),
+        resolve: (source, args) => {
+          
+        }
+      },
       employer: { type: Company },
       skills: {
         type: new GraphQLList(Skill),
         resolve: (source, args) => {
-          return [{
-            id: '3',
-            title: 'JS Master 2'
-          }];
+          return db.Employee.find({
+            where: {id: source.id},
+            include: {model: db.Skill}
+          }).then(employee => employee.Skills);
         }
       }
     })
@@ -40,11 +45,10 @@ export const createSchema = db => {
       masters: {
         type: new GraphQLList(Employee),
         resolve: (source, args) => {
-          console.log('masters by skill', source, args);
-          return [{
-            id: '1',
-            name: 'Gustav 2'
-          }];
+          return db.Skill.find({
+            where: {id: source.id},
+            include: {model: db.Employee}
+          }).then(skill => skill.Employees);
         }
       }
     })
