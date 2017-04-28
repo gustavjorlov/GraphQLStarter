@@ -1,4 +1,4 @@
-export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
+export const WorkService = ({Employee, Skill, Company}) => {
   return {
     
     // Mutations

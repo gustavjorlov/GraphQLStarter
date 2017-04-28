@@ -1,6 +1,6 @@
 import express from 'express';
 import {graphql} from 'graphql';
-import {createSchema} from './schema2';
+import {createSchema} from './schema';
 import bodyParser from 'body-parser';
 import {connectDB} from './database/mysql_connector';
 import {WorkService} from './database/work_service';

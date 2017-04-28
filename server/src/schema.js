@@ -1,103 +1,146 @@
 import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt} from 'graphql';
-import {database} from './database/database';
 var DataLoader = require('dataloader');
 
-const personLoader = new DataLoader(keys => database.getPersonsByIds(keys));
-const loadPersonByTalk = new DataLoader(talkIds => new Promise((resolve, reject) => {
-    resolve(database.getPersonsByTalkIds(talkIds));
-}));
+export const createSchema = dbService => {
+  const employeeLoader = new DataLoader(keys => dbService.getEmployeesBatch(keys));
+  const skillLoader = new DataLoader(keys => dbService.getSkillsBatch(keys));
+  const companyLoader = new DataLoader(keys => dbService.getCompaniesBatch(keys));
 
-const Person = new GraphQLObjectType({
-  name: 'Person',
-  description: 'Consultants, nerds and others',
-  fields: () => ({
-    id: { type: GraphQLString },
-    name: { type: GraphQLString },
-    age: { type: GraphQLInt },
-    talk: {
-      type: Talk,
-      resolve: (source, args) => database.getTalkByPersonId(source.id)
-    }
-  })
-});
-
-const Talk = new GraphQLObjectType({
-  name: 'Talk',
-  fields: {
-    id: { type: GraphQLString },
-    talker: {
-      type: Person,
-      resolve: (talk, args) => loadPersonByTalk.load(talk.id)
-    },
-    title: {type: GraphQLString},
-    transcript: {type: GraphQLString},
-    attendees: {
-      type: new GraphQLList(Person),
-      resolve: talk => talk.attendees.map(attendee => personLoader.load(attendee))
-    }
-  }
-});
-
-const KitsCon = new GraphQLObjectType({
-  name: 'KitsCon',
-  description: 'Conference API, the right way',
-  fields: {
-    id: { type: GraphQLString, description: 'Semver FTW' },
-    date: { type: GraphQLString, description: 'Date of the dates' },
-    talks: {
-      description: 'List of all talks on the conference',
-      type: new GraphQLList(Talk),
-      resolve: () => database.getTalks()
-    },
-    attendees: {
-      type: new GraphQLList(Person),
-      resolve: (source, args) => database.getPersons()
-    }
-  }
-});
-
-const Query = new GraphQLObjectType({
-  name: 'Query',
-  description: 'Root query',
-  fields: {
-    attendees: {
-      type: new GraphQLList(Person),
-      resolve: (source, args) => {
-        return database.getPersons();
+  const Employee = new GraphQLObjectType({
+    name: 'Employee',
+    description: 'Nerd or programmer, what difference does it make?',
+    fields: () => ({
+      id: { type: GraphQLString },
+      name: { type: GraphQLString },
+      email: { type: GraphQLString },
+      company: {
+        type: Company,
+        resolve: (source) => source.Company ? companyLoader.load(source.Company.id) : null
+      },
+      skills: {
+        type: new GraphQLList(Skill),
+        resolve: (source, args) => source.Skills.map(_skill => skillLoader.load(_skill.id))
       }
-    },
-    kitscon: {
-      type: KitsCon,
-      args: {
-        id: {type: GraphQLString}
-      },
-      resolve: (source, args) => database.getConferenceById(args.id)
-    },
-    talks: {
-      type: new GraphQLList(Talk),
-      resolve: () => database.getTalks()
+    })
+  });
+  const Company = new GraphQLObjectType({
+    name: 'Company',
+    description: 'Workplace',
+    fields: {
+      id: { type: GraphQLString },
+      name: { type: GraphQLString },
+      address: { type: GraphQLString },
+      employees: { 
+        type: new GraphQLList(Employee),
+        resolve: source => employeeLoader.loadMany(source.Employees.map(_emp => _emp.id))
+      }
     }
-  }
-});
+  });
+  const Skill = new GraphQLObjectType({
+    name: 'Skill',
+    description: "A thing you know and don't know",
+    fields: () => ({
+      id: { type: GraphQLString },
+      title: { type: GraphQLString },
+      masters: {
+        type: new GraphQLList(Employee),
+        resolve: (source) => employeeLoader.loadMany(source.Employees.map(_emp => _emp.id))
+      }
+    })
+  });
 
-const Mutation = new GraphQLObjectType({
-  name: 'Mutation',
-  description: 'Add stuff to the conference',
-  fields: {
-    addAttendee: {
-      type: Person,
-      description: 'Create Person to add to the conference',
-      args: {
-        name: {type: new GraphQLNonNull(GraphQLString)}
+  const Query = new GraphQLObjectType({
+    name: 'Query',
+    description: 'The root query',
+    fields: {
+      company: {
+        type: Company,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        resolve: (source, {id}) => companyLoader.load(id)
       },
-      resolve: (source, args) => database.addAttendee(args.name)
+      companies: {
+        type: new GraphQLList(Company),
+        args: {limit: {type: GraphQLInt}},
+        resolve: (sourve, {limit}) => dbService.getCompanies(limit)
+      },
+      employee: {
+        type: Employee,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        resolve: (source, args) => employeeLoader.load(args.id)
+      },
+      employees: {
+        type: new GraphQLList(Employee),
+        args: {limit: {type: GraphQLInt}},
+        resolve: (source, {limit}) => dbService.getEmployees(limit)
+      },
+      skill: {
+        type: Skill,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        resolve: (source, {id}) => skillLoader.load(id)
+      },
+      skills: {
+        type: new GraphQLList(Skill),
+        args: {limit: {type: GraphQLInt}},
+        resolve: (source, {limit}) => dbService.getSkills(limit)
+      }
     }
-  }
-});
+  });
 
-const schema = new GraphQLSchema({
-  query: Query,
-  mutation: Mutation
-});
+  const Mutation = new GraphQLObjectType({
+    name: 'Mutation',
+    description: 'The root mutation',
+    fields: {
+      addCompany: {
+        type: Company,
+        args: {
+          name: { type: new GraphQLNonNull(GraphQLString) },
+          address: { type: GraphQLString }
+        },
+        resolve: (source, {name, address}) => dbService.createCompany({name, address})
+      },
+      addEmployee: {
+        type: Company,
+        args: {
+          name: { type: new GraphQLNonNull(GraphQLString) },
+          email: { type: new GraphQLNonNull(GraphQLString) }
+        },
+        resolve: (source, {name, email}) => dbService.createEmployee({name, email})
+      },
+      addEmployeeToCompany: {
+        type: Employee,
+        args: {
+          employeeId: {type: new GraphQLNonNull(GraphQLString)},
+          companyId: {type: new GraphQLNonNull(GraphQLString)}
+        },
+        resolve: (source, {employeeId, companyId}) => {
+          employeeLoader.clearAll();
+          companyLoader.clearAll();
+          return dbService.addEmployeeToCompany(employeeId, companyId);
+        }
+      },
+      addSkill: {
+        type: Skill,
+        args: {
+          title: {type: new GraphQLNonNull(GraphQLString)}
+        },
+        resolve: (source, {title}) => dbService.createSkill({title})
+      },
+      addSkillToEmployee: {
+        type: Skill,
+        args: {
+          employeeId: {type: new GraphQLNonNull(GraphQLString)},
+          skillId: {type: new GraphQLNonNull(GraphQLString)}
+        },
+        resolve: (source, {employeeId, skillId}) => {
+          employeeLoader.clearAll();
+          return dbService.addSkillToEmployee(skillId, employeeId)
+        }
+      }
+    }
+  });
 
-export default schema;
+  return new GraphQLSchema({
+    query: Query,
+    mutation: Mutation
+  });
+};
