@@ -1,5 +1,6 @@
 export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
   return {
+    
     // Mutations
     createEmployee: _employee => Employee.create(_employee),
     createSkill: _skill => Skill.create(_skill),
@@ -12,7 +13,6 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
     },
 
     // Employee getters
-    getEmployee: id => Employee.find({where: {id: id}}),
     getEmployeesBatch: ids => {
       console.log('getEmployeesBatch', ids);
       return Employee.findAll({
@@ -30,19 +30,15 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
         {model: Company, attributes: ['id']}
       ]
     }),
-    getEmployeeKeysBySkillId: skillId => EmployeeSkill.findAll({where: {skillId}}).then(combos => {
-      return combos.map(combo => combo.employeeId);
-    }),
-    getEmployeesByCompany: companyId => Employee.findAll({where: {companyId}}),
-    getEmployeesByCompaniesBatch: companyIds => {
-      return Employee.findAll({where: {companyId: {$in: companyIds}}});
-    },
 
     // Skill getters
-    getSkill: id => Skill.find({
-      where: {id},
-      include: {model: Employee, attributes: ['id']}
-    }),
+    getSkill: id => {
+      console.log('getSkill', id);  
+      return Skill.find({
+        where: {id},
+        include: {model: Employee, attributes: ['id']}
+      });
+    },
     getSkills: (limit = 2) => Skill.findAll({
       limit,
       include: {model: Employee, attributes: ['id']}
@@ -56,11 +52,12 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
     },
 
     // Company getters
-    getCompanies: () => Company.findAll({
+    getCompanies: (limit = 2) => Company.findAll({
+      limit,
       include: {model: Employee, attributes: ['id']}
     }),
     getCompaniesBatch: ids => {
-      console.log('getCompaniesBatch ids', ids);
+      console.log('getCompaniesBatch', ids);
       return Company.findAll({
         where: {id: {$in: ids}},
         include: {model: Employee, attributes: ['id']}

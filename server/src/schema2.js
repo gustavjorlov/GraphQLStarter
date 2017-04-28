@@ -60,7 +60,8 @@ export const createSchema = dbService => {
       },
       companies: {
         type: new GraphQLList(Company),
-        resolve: (sourve, args) => dbService.getCompanies()
+        args: {limit: {type: GraphQLInt}},
+        resolve: (sourve, {limit}) => dbService.getCompanies(limit)
       },
       employee: {
         type: Employee,
