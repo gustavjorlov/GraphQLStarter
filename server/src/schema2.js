@@ -1,28 +1,27 @@
 import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt} from 'graphql';
 var DataLoader = require('dataloader');
 
-export const createSchema = db => {
+export const createSchema = dbService => {
+  const employeeLoader = new DataLoader(keys => dbService.getEmployeesBatch(keys), { cache: false });
+  const skillLoader = new DataLoader(keys => dbService.getSkillsBatch(keys), { cache: false });
+  const companyLoader = new DataLoader(keys => dbService.getCompaniesBatch(keys), { cache: false });
+  const employeesByCompanyLoader = new DataLoader(keys => dbService.getEmployeesByCompaniesBatch(keys), { cache: false });
+  const companyByEmployeeLoader = new DataLoader(keys => dbService.getCompanyByEmployeeBatch(keys), { cache: false });
+
   const Employee = new GraphQLObjectType({
     name: 'Employee',
     description: 'Nerd or programmer, what difference does it make?',
     fields: () => ({
       id: { type: GraphQLString },
       name: { type: GraphQLString },
-      colleagues: {
-        type: new GraphQLList(Employee),
-        resolve: (source, args) => {
-          
-        }
+      email: { type: GraphQLString },
+      employer: {
+        type: Company,
+        resolve: ({id}) => companyByEmployeeLoader.load(id)
       },
-      employer: { type: Company },
       skills: {
         type: new GraphQLList(Skill),
-        resolve: (source, args) => {
-          return db.Employee.find({
-            where: {id: source.id},
-            include: {model: db.Skill}
-          }).then(employee => employee.Skills);
-        }
+        resolve: (source, args) => source.Skills.map(_skill => skillLoader.load(_skill.id))
       }
     })
   });
@@ -33,7 +32,11 @@ export const createSchema = db => {
       id: { type: GraphQLString },
       name: { type: GraphQLString },
       address: { type: GraphQLString },
-      employees: { type: new GraphQLList(Employee) }
+      employees: { 
+        type: new GraphQLList(Employee),
+        resolve: ({id}, args) => dbService.getEmployeesByCompany(id)
+        // resolve: ({id}, args) => employeesByCompanyLoader.load(id) //nope.. doesn't return array of same length...
+      }
     }
   });
   const Skill = new GraphQLObjectType({
@@ -44,12 +47,9 @@ export const createSchema = db => {
       title: { type: GraphQLString },
       masters: {
         type: new GraphQLList(Employee),
-        resolve: (source, args) => {
-          return db.Skill.find({
-            where: {id: source.id},
-            include: {model: db.Employee}
-          }).then(skill => skill.Employees);
-        }
+        resolve: (source, args) => dbService.getEmployeeKeysBySkillId(source.id).then(_empKeys => {
+          return _empKeys.map(_empKey => employeeLoader.load(_empKey));
+        })
       }
     })
   });
@@ -58,25 +58,33 @@ export const createSchema = db => {
     name: 'Query',
     description: 'The root query',
     fields: {
+      company: {
+        type: Company,
+        args: {id: {type: new GraphQLNonNull(GraphQLString)}},
+        resolve: (source, {id}) => companyLoader.load(id)
+      },
+      companies: {
+        type: new GraphQLList(Company),
+        resolve: (sourve, args) => dbService.getCompanies()
+      },
       employee: {
         type: Employee,
         args: {id: {type: new GraphQLNonNull(GraphQLString)}},
-        resolve: (source, args) => {
-          console.log({args});
-          return db.Employee.find({where: {id: args.id}});
-        }
+        resolve: (source, args) => employeeLoader.load(args.id)
+      },
+      employees: {
+        type: new GraphQLList(Employee),
+        resolve: () => dbService.getEmployees()
       },
       skill: {
         type: Skill,
         args: {id: {type: new GraphQLNonNull(GraphQLString)}},
-        resolve: (source, args) => db.Skill.find({where: {id: args.id}})
+        resolve: (source, {id}) => skillLoader.load(id)
       },
       skills: {
         type: new GraphQLList(Skill),
-        args: {
-          limit: {type: GraphQLInt}
-        },
-        resolve: (source, args) => db.Skill.findAll({limit: args.limit || 2})
+        args: {limit: {type: GraphQLInt}},
+        resolve: (source, {limit}) => dbService.getSkills(limit)
       }
     }
   });
@@ -91,13 +99,7 @@ export const createSchema = db => {
           name: { type: new GraphQLNonNull(GraphQLString) },
           address: { type: GraphQLString }
         },
-        resolve: (source, args) => {
-          console.log('Creating company', args);
-          return db.Company.create({
-            name: args.name,
-            address: args.address || 'in space'
-          });
-        }
+        resolve: (source, {name, address}) => dbService.createCompany({name, address})
       },
       addEmployee: {
         type: Company,
@@ -106,20 +108,22 @@ export const createSchema = db => {
           name: { type: new GraphQLNonNull(GraphQLString) },
           email: { type: new GraphQLNonNull(GraphQLString) }
         },
-        resolve: (source, args) => {
-          console.log('Creating employee', args);
-          return db.Employee.create({
-            name: args.name,
-            email: args.email
-          }).then(_employee => _employee.setCompany(args.companyId));
-        }
+        resolve: (source, {name, email}) => dbService.createEmployee({name, email})
+      },
+      addEmployeeToCompany: {
+        type: Employee,
+        args: {
+          employeeId: {type: new GraphQLNonNull(GraphQLString)},
+          companyId: {type: new GraphQLNonNull(GraphQLString)}
+        },
+        resolve: (source, {employeeId, companyId}) => dbService.addEmployeeToCompany(employeeId, companyId)
       },
       addSkill: {
         type: Skill,
         args: {
           title: {type: new GraphQLNonNull(GraphQLString)}
         },
-        resolve: (source, {title}) => db.Skill.create({title})
+        resolve: (source, {title}) => dbService.createSkill({title})
       },
       addSkillToEmployee: {
         type: Skill,
@@ -127,11 +131,7 @@ export const createSchema = db => {
           employeeId: {type: new GraphQLNonNull(GraphQLString)},
           skillId: {type: new GraphQLNonNull(GraphQLString)}
         },
-        resolve: (source, args) => {
-          return db.Employee.find({where: {id: args.employeeId}}).then(_employee => {
-            return _employee.addSkill(args.skillId);
-          });
-        }
+        resolve: (source, {employeeId, skillId}) => dbService.addSkillToEmployee(skillId, employeeId)
       }
     }
   });
