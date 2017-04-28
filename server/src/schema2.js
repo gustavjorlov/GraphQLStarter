@@ -101,7 +101,6 @@ export const createSchema = dbService => {
       addEmployee: {
         type: Company,
         args: {
-          companyId: { type: new GraphQLNonNull(GraphQLString) },
           name: { type: new GraphQLNonNull(GraphQLString) },
           email: { type: new GraphQLNonNull(GraphQLString) }
         },

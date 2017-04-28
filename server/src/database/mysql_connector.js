@@ -31,38 +31,13 @@ const _initiateSequelize = dbConfig => {
   });
 };
 
-// const _insertDefaultData = handles => {
-//   const _companies = companyHandle => {
-//     const companyData = [
-//       {name: 'KITS AB', address: 'Norra Allégatan 8'},
-//       {name: 'Home Office', address: 'At home'}
-//     ];
-//   };
-//   const _employees = employeeHandle => {
-//     const employeeData = [
-//       {name: 'Gustav',email: 'gustav@mail.com'},
-//       {name: 'Robert',email: 'robert@mail.com'},
-//       {name: 'Anders',email: 'anders@mail.com'},
-//       {name: 'Emil',email: 'emil@mail.com'}
-//     ];
-//     return Promise.all(employeeData.map(emp => {
-//       return employeeHandle.find({where: {email: emp.email}})
-//         .then(employee => employee ? employee : employeeHandle.create(emp));
-//     }));
-//   };
-//   return _companies.then(companies).
-//     // create companies, and let the employees be hired by a company
-//   _employees(handles.Employee);
-// };
-
 export const connectDB = dbConfig => {
   const sequelize = _initiateSequelize(dbConfig);
   const tableHandles = _defineTables(sequelize);
 
-  console.log('Connect');
+  console.log('Connected');
 
   return sequelize.sync()
-    // .then(() => _insertDefaultData(tableHandles))
     .then(() => tableHandles)
     .catch(err => {
       console.log(':(', {err});
