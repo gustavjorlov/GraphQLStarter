@@ -18,9 +18,11 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
       console.log('getEmployeesBatch', ids);
       return Employee.findAll({
         where: {id: {$in: ids}},
-        include: {
+        include: [{
           model: Skill, attributes: ['id']
-        }
+        }, {
+          model: Company, attributes: ['id']
+        }]
       })
     },
     getEmployees: () => Employee.findAll(),

@@ -5,8 +5,6 @@ export const createSchema = dbService => {
   const employeeLoader = new DataLoader(keys => dbService.getEmployeesBatch(keys), { cache: false });
   const skillLoader = new DataLoader(keys => dbService.getSkillsBatch(keys), { cache: false });
   const companyLoader = new DataLoader(keys => dbService.getCompaniesBatch(keys), { cache: false });
-  const employeesByCompanyLoader = new DataLoader(keys => dbService.getEmployeesByCompaniesBatch(keys), { cache: false });
-  const companyByEmployeeLoader = new DataLoader(keys => dbService.getCompanyByEmployeeBatch(keys), { cache: false });
 
   const Employee = new GraphQLObjectType({
     name: 'Employee',
@@ -15,9 +13,9 @@ export const createSchema = dbService => {
       id: { type: GraphQLString },
       name: { type: GraphQLString },
       email: { type: GraphQLString },
-      employer: {
+      company: {
         type: Company,
-        resolve: ({id}) => companyByEmployeeLoader.load(id)
+        resolve: (source) => companyLoader.load(source.Company.id)
       },
       skills: {
         type: new GraphQLList(Skill),
@@ -35,7 +33,6 @@ export const createSchema = dbService => {
       employees: { 
         type: new GraphQLList(Employee),
         resolve: ({id}, args) => dbService.getEmployeesByCompany(id)
-        // resolve: ({id}, args) => employeesByCompanyLoader.load(id) //nope.. doesn't return array of same length...
       }
     }
   });
