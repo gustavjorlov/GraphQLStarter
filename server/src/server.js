@@ -17,7 +17,7 @@ app.use(express.static('../frontend/build'));
 
 connectDB({
   database: 'users', userName: 'admin', password: 'hejhoj',
-  host: 'mysql-service', dialect: 'mysql', logging: console.log // false
+  host: 'mysql-service', dialect: 'mysql', logging: false // console.log // false
 }).then(db => {
   console.log("Woop, db done", Object.keys(db));
   const _workService = WorkService(db);

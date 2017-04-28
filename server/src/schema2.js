@@ -2,9 +2,9 @@ import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNon
 var DataLoader = require('dataloader');
 
 export const createSchema = dbService => {
-  const employeeLoader = new DataLoader(keys => dbService.getEmployeesBatch(keys), { cache: false });
-  const skillLoader = new DataLoader(keys => dbService.getSkillsBatch(keys), { cache: false });
-  const companyLoader = new DataLoader(keys => dbService.getCompaniesBatch(keys), { cache: false });
+  const employeeLoader = new DataLoader(keys => dbService.getEmployeesBatch(keys));
+  const skillLoader = new DataLoader(keys => dbService.getSkillsBatch(keys));
+  const companyLoader = new DataLoader(keys => dbService.getCompaniesBatch(keys));
 
   const Employee = new GraphQLObjectType({
     name: 'Employee',
@@ -15,7 +15,7 @@ export const createSchema = dbService => {
       email: { type: GraphQLString },
       company: {
         type: Company,
-        resolve: (source) => companyLoader.load(source.Company.id)
+        resolve: (source) => source.Company ? companyLoader.load(source.Company.id) : null
       },
       skills: {
         type: new GraphQLList(Skill),
@@ -32,7 +32,7 @@ export const createSchema = dbService => {
       address: { type: GraphQLString },
       employees: { 
         type: new GraphQLList(Employee),
-        resolve: ({id}, args) => dbService.getEmployeesByCompany(id)
+        resolve: source => employeeLoader.loadMany(source.Employees.map(_emp => _emp.id))
       }
     }
   });
@@ -44,9 +44,7 @@ export const createSchema = dbService => {
       title: { type: GraphQLString },
       masters: {
         type: new GraphQLList(Employee),
-        resolve: (source, args) => dbService.getEmployeeKeysBySkillId(source.id).then(_empKeys => {
-          return _empKeys.map(_empKey => employeeLoader.load(_empKey));
-        })
+        resolve: (source) => employeeLoader.loadMany(source.Employees.map(_emp => _emp.id))
       }
     })
   });
@@ -71,7 +69,8 @@ export const createSchema = dbService => {
       },
       employees: {
         type: new GraphQLList(Employee),
-        resolve: () => dbService.getEmployees()
+        args: {limit: {type: GraphQLInt}},
+        resolve: (source, {limit}) => dbService.getEmployees(limit)
       },
       skill: {
         type: Skill,

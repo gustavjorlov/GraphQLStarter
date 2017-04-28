@@ -1,5 +1,4 @@
 export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
-  const getCompanyByEmployeeId = id => Employee.find({where: {id}, include: {model: Company}}).then(_emp => _emp.Company);
   return {
     // Mutations
     createEmployee: _employee => Employee.create(_employee),
@@ -18,14 +17,19 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
       console.log('getEmployeesBatch', ids);
       return Employee.findAll({
         where: {id: {$in: ids}},
-        include: [{
-          model: Skill, attributes: ['id']
-        }, {
-          model: Company, attributes: ['id']
-        }]
+        include: [
+          {model: Skill, attributes: ['id']},
+          {model: Company, attributes: ['id']}
+        ]
       })
     },
-    getEmployees: () => Employee.findAll(),
+    getEmployees: (limit = 2) => Employee.findAll({
+      limit,
+      include: [
+        {model: Skill, attributes: ['id']},
+        {model: Company, attributes: ['id']}
+      ]
+    }),
     getEmployeeKeysBySkillId: skillId => EmployeeSkill.findAll({where: {skillId}}).then(combos => {
       return combos.map(combo => combo.employeeId);
     }),
@@ -35,29 +39,32 @@ export const WorkService = ({Employee, Skill, Company, EmployeeSkill}) => {
     },
 
     // Skill getters
-    getSkill: id => Skill.find({where: {id}}),
-    getSkills: (limit = 2) => Skill.findAll({limit}),
-    getSkillKeysByEmployeeId: employeeId => EmployeeSkill.findAll({where: {employeeId}}).then(combos => {
-      return combos.map(combo => combo.skillId);
+    getSkill: id => Skill.find({
+      where: {id},
+      include: {model: Employee, attributes: ['id']}
+    }),
+    getSkills: (limit = 2) => Skill.findAll({
+      limit,
+      include: {model: Employee, attributes: ['id']}
     }),
     getSkillsBatch: ids => {
       console.log('getSkillsBatch', ids)
-      return Skill.findAll({where: {id: {$in: ids}}})
+      return Skill.findAll({
+        where: {id: {$in: ids}},
+        include: {model: Employee, attributes: ['id']}
+      })
     },
 
     // Company getters
-    getCompany: id => Company.find({where: {id}}),
-    getCompanies: () => Company.findAll(),
+    getCompanies: () => Company.findAll({
+      include: {model: Employee, attributes: ['id']}
+    }),
     getCompaniesBatch: ids => {
-      console.log('getCompaniesBatch', ids);
-      return Company.findAll({where: {id: {$in: ids}}});
-    },
-    getCompanyByEmployeeId,
-    getCompanyByEmployeeBatch: ids => {
-      return Employee.findAll({
+      console.log('getCompaniesBatch ids', ids);
+      return Company.findAll({
         where: {id: {$in: ids}},
-        include: {model: Company}
-      }).then(_employees => _employees.map(_emp => _emp.Company));
+        include: {model: Employee, attributes: ['id']}
+      });
     }
   };
 }
