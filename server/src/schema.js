@@ -103,8 +103,8 @@ export const createSchema = dbService => {
         args: { company: { type: CompanyInputType } },
         resolve: (source, args) => {
           console.log(JSON.stringify(args, null, 2));
-          return null;
-          // return dbService.createCompany({name, address});
+          const {name, address} = args.company;
+          return dbService.createCompany({name, address});
         }
       },
       addEmployee: {
