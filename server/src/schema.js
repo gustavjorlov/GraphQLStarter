@@ -1,4 +1,4 @@
-import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt} from 'graphql';
+import {GraphQLSchema, GraphQLList, GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLInt, GraphQLInputObjectType} from 'graphql';
 var DataLoader = require('dataloader');
 
 export const createSchema = dbService => {
@@ -86,17 +86,26 @@ export const createSchema = dbService => {
     }
   });
 
+  const CompanyInputType = new GraphQLInputObjectType({
+    name: 'CompanyInputType',
+    fields: {
+      name: { type: new GraphQLNonNull(GraphQLString) },
+      address: { type: GraphQLString }
+    }
+  });
+
   const Mutation = new GraphQLObjectType({
     name: 'Mutation',
     description: 'The root mutation',
     fields: {
       addCompany: {
         type: Company,
-        args: {
-          name: { type: new GraphQLNonNull(GraphQLString) },
-          address: { type: GraphQLString }
-        },
-        resolve: (source, {name, address}) => dbService.createCompany({name, address})
+        args: { company: { type: CompanyInputType } },
+        resolve: (source, args) => {
+          console.log(JSON.stringify(args, null, 2));
+          return null;
+          // return dbService.createCompany({name, address});
+        }
       },
       addEmployee: {
         type: Company,
